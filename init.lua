@@ -116,7 +116,7 @@ vim.o.showmode = false
 --  See `:help 'clipboard'`
 vim.schedule(function() vim.o.clipboard = 'unnamedplus' end)
 
-if vim.env.SSH_TTY then vim.g.clipboard = 'osc52' end
+-- if vim.env.SSH_TTY then vim.g.clipboard = 'osc52' end
 
 -- Enable break indent
 vim.o.breakindent = true
@@ -613,7 +613,13 @@ require('lazy').setup({
         rust_analyzer = {},
         ts_ls = {},
         html = {},
-        solargraph = {},
+        solargraph = {
+          settings = {
+            solargraph = {
+              diagnostics = false,
+            },
+          },
+        },
         taplo = {},
         wgsl_analyzer = {},
       }
@@ -671,6 +677,7 @@ require('lazy').setup({
         capabilities = capabilities,
         cmd = { 'bundle', 'exec', 'rubocop', '--server' },
       })
+      vim.lsp.enable 'rubocop'
     end,
   },
 
