@@ -245,6 +245,12 @@ end
 local rtp = vim.opt.rtp
 rtp:prepend(lazypath)
 
+vim.filetype.add {
+  extension = {
+    ron = 'ron',
+  },
+}
+
 -- [[ Configure and install plugins ]]
 --
 --  To check the current status of your plugins, run
@@ -608,6 +614,8 @@ require('lazy').setup({
         ts_ls = {},
         html = {},
         solargraph = {},
+        taplo = {},
+        wgsl_analyzer = {},
       }
 
       -- Ensure the servers and tools above are installed
@@ -704,6 +712,7 @@ require('lazy').setup({
         javascript = { 'prettierd', 'prettier', stop_after_first = true },
         typescript = { 'prettierd', 'prettier', stop_after_first = true },
         typescriptreact = { 'prettierd', 'prettier', stop_after_first = true },
+        ron = { 'ron-lsp' },
       },
     },
   },
@@ -728,12 +737,17 @@ require('lazy').setup({
           -- `friendly-snippets` contains a variety of premade snippets.
           --    See the README about individual language/framework/plugin snippets:
           --    https://github.com/rafamadriz/friendly-snippets
-          -- {
-          --   'rafamadriz/friendly-snippets',
-          --   config = function()
-          --     require('luasnip.loaders.from_vscode').lazy_load()
-          --   end,
-          -- },
+          {
+            'rafamadriz/friendly-snippets',
+            config = function()
+              local ls = require 'luasnip'
+              ls.filetype_extend('rust', { 'bevy' })
+              require('luasnip.loaders.from_vscode').lazy_load()
+              require('luasnip.loaders.from_lua').load {
+                paths = vim.fn.stdpath 'config' .. '/lua/snippets',
+              }
+            end,
+          },
         },
         opts = {},
       },
@@ -764,6 +778,27 @@ require('lazy').setup({
         --
         -- See :h blink-cmp-config-keymap for defining your own keymap
         preset = 'default',
+
+        ['<CR>'] = {
+          function(cmp)
+            -- If menu not visible, fall back to normal behavior
+            if not cmp.is_visible() then return false end
+
+            -- First, accept the currently selected item (using its normal textEdit)
+            cmp.accept {
+              callback = function()
+                -- We should now be in insert mode, cursor at first arg
+                -- Jump to normal mode and delete the surrounding call: `da(`
+                vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('<Esc>da(l', true, false, true), 'n', false)
+                -- Optionally, go back to insert mode after that:
+                vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('i', true, false, true), 'n', false)
+              end,
+            }
+
+            return true
+          end,
+          'fallback',
+        },
 
         -- For more advanced Luasnip keymaps (e.g. selecting choice nodes, expansion) see:
         --    https://github.com/L3MON4D3/LuaSnip?tab=readme-ov-file#keymaps
@@ -865,8 +900,9 @@ require('lazy').setup({
   { -- Highlight, edit, and navigate code
     'nvim-treesitter/nvim-treesitter',
     config = function()
-      local filetypes = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' }
+      local filetypes = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc', 'ron', 'wgsl' }
       require('nvim-treesitter').install(filetypes)
+
       vim.api.nvim_create_autocmd('FileType', {
         pattern = filetypes,
         callback = function() vim.treesitter.start() end,
@@ -925,3 +961,25 @@ require('lazy').setup({
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
+
+---------------------
+-- Extra keymap stuff
+---------------------
+
+-- mini terminal
+vim.keymap.set('n', '<leader>~', function()
+  vim.cmd 'belowright 10split | terminal'
+  vim.cmd 'startinsert'
+end, { desc = 'Open small terminal at bottom' })
+
+-- RON LSP nonsense
+vim.lsp.config('ron_lsp', {
+  cmd = { 'ron-lsp' },
+  filetypes = { 'ron' },
+  root_dir = function(fname) return vim.fs.root(fname, { 'Cargo.toml', '.git' }) or vim.fn.fnamemodify(fname, ':h') end,
+})
+
+vim.api.nvim_create_autocmd('FileType', {
+  pattern = 'ron',
+  callback = function() vim.lsp.start(vim.lsp.config['ron_lsp']) end,
+})
