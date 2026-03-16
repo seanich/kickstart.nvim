@@ -901,6 +901,14 @@ require('lazy').setup({
 
       -- ... and there is more!
       --  Check out: https://github.com/nvim-mini/mini.nvim
+
+      -- mini.files
+      require('mini.files').setup()
+      local MiniFiles = require 'mini.files'
+      local minifiles_toggle = function(...)
+        if not MiniFiles.close() then MiniFiles.open(...) end
+      end
+      vim.keymap.set('n', '\\', minifiles_toggle)
     end,
   },
 
@@ -928,9 +936,9 @@ require('lazy').setup({
   --
   -- require 'kickstart.plugins.debug',
   require 'kickstart.plugins.indent_line',
-  -- require 'kickstart.plugins.lint',
+  require 'kickstart.plugins.lint',
   require 'kickstart.plugins.autopairs',
-  require 'kickstart.plugins.neo-tree',
+  -- require 'kickstart.plugins.neo-tree',
   require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
 
   -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
@@ -974,7 +982,7 @@ require('lazy').setup({
 ---------------------
 
 -- mini terminal
-vim.keymap.set('n', '<leader>~', function()
+vim.keymap.set('n', '<leader>`', function()
   vim.cmd 'belowright 10split | terminal'
   vim.cmd 'startinsert'
 end, { desc = 'Open small terminal at bottom' })
