@@ -116,7 +116,7 @@ vim.o.showmode = false
 --  See `:help 'clipboard'`
 vim.schedule(function() vim.o.clipboard = 'unnamedplus' end)
 
--- if vim.env.SSH_TTY then vim.g.clipboard = 'osc52' end
+if vim.env.SSH_TTY then vim.g.clipboard = 'osc52' end
 
 -- Enable break indent
 vim.o.breakindent = true
